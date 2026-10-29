@@ -45,6 +45,10 @@ class pjAdminEvents extends pjAdmin
 	    
 	    if (self::isPost() && $this->_post->toInt('event_create'))
 	    {
+	        if (!self::i18nFilled($this->_post->toArray('i18n'), 'title'))
+	        {
+	            pjUtil::redirect($_SERVER['PHP_SELF'] . "?controller=pjAdminEvents&action=pjActionIndex&err=AE04");
+	        }
 	    	$pjEventModel = pjEventModel::factory();
 			$pjPriceModel = pjPriceModel::factory();
 			
@@ -915,6 +919,10 @@ class pjAdminEvents extends pjAdmin
 		{
 		    self::jsonResponse(array('status' => 'ERR', 'code' => 102, 'text' => 'Access denied.'));
 		}
+		if ($this->_post->toString('column') === 'title' && trim((string) $this->_post->toString('value')) === '')
+		{
+		    self::jsonResponse(array('status' => 'ERR', 'code' => 104, 'text' => 'Event title is required.'));
+		}
 		$pjEventModel = pjEventModel::factory();
 		$arr = $pjEventModel->find($this->_get->toInt('id'))->getData();
 		if (!$arr)
@@ -981,6 +989,10 @@ class pjAdminEvents extends pjAdmin
 	    	    
 	    if (self::isPost() && $this->_post->toInt('event_update'))
 	    {
+	        if (!self::i18nFilled($this->_post->toArray('i18n'), 'title'))
+	        {
+	            pjUtil::redirect(PJ_INSTALL_URL . "index.php?controller=pjAdminEvents&action=pjActionUpdate&id=" . $this->_post->toInt('id') . "&err=AE14&tab=" . $this->_post->toString('tab'));
+	        }
 	        $pjEventModel = pjEventModel::factory();
 
 	        $tab = $this->_post->toString('tab');

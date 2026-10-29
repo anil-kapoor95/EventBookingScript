@@ -1341,3 +1341,18 @@ body::-webkit-scrollbar-track {
 
     .form-group .switch { margin-top: 0; }
 }
+
+/* ---- Admin layout polish (shared by all admin pages) ---- */
+/* Option pages (label left / control right): same control width everywhere */
+.form-group > [class*="col-sm-9"] > select.form-control,
+.form-group > [class*="col-sm-9"] > input.form-control:not([type="checkbox"]) { max-width: 405px; }
+
+/* Top bar on phones: keep Profile / Log out on one line */
+@media (max-width: 480px) {
+    .navbar-top-links { display: flex; flex-wrap: nowrap; align-items: center; }
+    .navbar-top-links > li:first-child { display: none; }
+}
+@media (max-width: 1199px) {
+    .form-horizontal .form-group > [class*="col-sm-9"] > .row > .col-sm-6 { width: 100%; }
+    .form-horizontal .form-group > [class*="col-sm-9"] > .row > p.m-t-xs { clear: both; padding: 0 15px; margin-bottom: 0; }
+}

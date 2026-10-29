@@ -49,7 +49,7 @@ $bs = __('booking_statuses', true);
 	    				</div>
 	    				<?php
 	    				break;
-	                case in_array($error_code, array('AE04', 'AE05', 'AE08', 'AE09', 'AE10', 'AE11', 'AE12', 'AE13')):
+	                case in_array($error_code, array('AE04', 'AE05', 'AE08', 'AE09', 'AE10', 'AE11', 'AE12', 'AE13', 'AE14')):
 	                    $bodies_text = str_replace("{SIZE}", ini_get('post_max_size'), @$bodies[$error_code]);
 	    				?>
 	    				<div class="alert alert-danger">

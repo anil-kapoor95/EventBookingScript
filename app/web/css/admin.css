@@ -139,3 +139,37 @@ input.barcode-field {
     font-size: 36px;
 }
 #frmReadBarcode p.form-control-static{padding: 0 0 0 5px;}
+/* ==========================================================================
+   Admin layout polish - shared rules so every form behaves the same way
+   ========================================================================== */
+
+/* Event form (add + edit): start/end date next to its "only show date" switch,
+   switch and its label on one line, aligned with the input */
+.row:has(> :is(.col-lg-5, .col-lg-6) .datetimepick) { display: flex; flex-wrap: wrap; align-items: flex-end; }
+.row:has(> :is(.col-lg-5, .col-lg-6) .datetimepick)::before,
+.row:has(> :is(.col-lg-5, .col-lg-6) .datetimepick)::after { display: none; }
+.row:has(> :is(.col-lg-5, .col-lg-6) .datetimepick) > [class*="col-"] { float: none; width: auto; }
+.row:has(> :is(.col-lg-5, .col-lg-6) .datetimepick) > [class*="col-"]:first-child { flex: 0 0 250px; max-width: 100%; }
+.row:has(> :is(.col-lg-5, .col-lg-6) .datetimepick) > [class*="col-"]:last-child { flex: 1 1 220px; }
+.row:has(> :is(.col-lg-5, .col-lg-6) .datetimepick) > [class*="col-"]:last-child .form-group { display: flex; flex-direction: row-reverse; justify-content: flex-end; align-items: center; gap: 12px; min-height: 34px; margin-bottom: 15px; }
+.row:has(> :is(.col-lg-5, .col-lg-6) .datetimepick) > [class*="col-"]:last-child .control-label { margin: 0; line-height: 1.3; }
+
+/* Event form: ticket price table - "Add" sits right under the table, table scrolls on small screens */
+.row:has(> [class*="col-"] > div > .table-responsive-secondary) > [class*="col-"] { float: none; width: 100%; max-width: none; }
+.row:has(> [class*="col-"] > div > .table-responsive-secondary) .m-t-lg { margin-top: 0 !important; }
+.row:has(> [class*="col-"] > div > .table-responsive-secondary) .pj-add-price { margin: 0 0 20px; }
+.table-responsive-secondary > .table { min-width: 560px; }
+#ebc_price_list td { vertical-align: middle; }
+
+/* Payments: no stray empty heading / gap before the last gateway tile */
+.m-t-lg.m-b-lg:has(> h2.m-n:empty) { display: none; }
+.row:has(> [class*="col-"] > a.paymentLink) { margin-bottom: 4px; }
+
+/* Voucher form: hint under "Rule value" no longer stretches the first row */
+.help-block.m-b-none { margin-top: 4px; line-height: 1.35; }
+
+/* Event edit on tablets/phones: the empty spacer tab above Save/Cancel is only
+   needed beside the vertical tab list, so hide it when tabs stack */
+@media (max-width: 991px) {
+    .tab-update-event > .tabs-left + .tabs-left > .nav-tabs { display: none; }
+}

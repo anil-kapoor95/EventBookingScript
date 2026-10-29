@@ -59,6 +59,10 @@ class pjAdminVouchers extends pjAdmin
 
 		if ($this->_post->check('voucher_create'))
 		{
+			if (trim((string) $this->_post->toString('code')) === '')
+			{
+				pjUtil::redirect(sprintf("%s?controller=pjAdminVouchers&action=pjActionIndex&err=AV02", $_SERVER['PHP_SELF']));
+			}
 			$data = array();
 			$data['code'] = $this->_post->toString('code');
 			$data['discount'] = $this->_post->toString('discount');
@@ -293,6 +297,10 @@ class pjAdminVouchers extends pjAdmin
 		{
 		    self::jsonResponse(array('status' => 'ERR', 'code' => 102, 'text' => 'Access denied.'));
 		}
+		if ($this->_post->toString('column') === 'code' && trim((string) $this->_post->toString('value')) === '')
+		{
+		    self::jsonResponse(array('status' => 'ERR', 'code' => 104, 'text' => 'Voucher code is required.'));
+		}
 		$pjVoucherModel = pjVoucherModel::factory();
 		$arr = $pjVoucherModel->find($this->_get->toInt('id'))->getData();
 		if (!$arr)
@@ -320,6 +328,10 @@ class pjAdminVouchers extends pjAdmin
 
 		if ($this->_post->check('voucher_update'))
 		{
+			if (trim((string) $this->_post->toString('code')) === '')
+			{
+				pjUtil::redirect(sprintf("%s?controller=pjAdminVouchers&action=pjActionIndex&err=AV06", $_SERVER['PHP_SELF']));
+			}
 			$data = array();
 			$data['id'] = $this->_post->toInt('id');
 			$data['code'] = $this->_post->toString('code');

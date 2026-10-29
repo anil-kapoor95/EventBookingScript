@@ -344,6 +344,7 @@ class pjAppController extends pjBaseAppController
     public function beforeFilter()
     {
         parent::beforeFilter();
+        $this->trimPostedValues();
 
         if(!$this->_get->isEmpty('controller') && !in_array($this->_get->toString('controller'), array('pjFront', 'pjInstaller')))
         {
@@ -351,6 +352,92 @@ class pjAppController extends pjBaseAppController
         }
         
         return true;
+    }
+
+    /**
+     * Remove leading/trailing white space from every submitted text value so a
+     * value made only of spaces/tabs/new lines becomes empty (and is then caught
+     * by the normal "required" checks). Passwords and tokens are left untouched.
+     */
+    protected function trimPostedValues()
+    {
+        // The framework keeps the real request data in the protected "_pj_post"
+        // array of $this->_post (the global $_POST is blanked by it), so that is
+        // the copy that has to be cleaned.
+        if (!is_object($this->_post) || !isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST')
+        {
+            return;
+        }
+        try {
+            $prop = new ReflectionProperty($this->_post, '_pj_post');
+            $prop->setAccessible(true);
+            $data = $prop->getValue($this->_post);
+            if (is_array($data) && !empty($data))
+            {
+                $prop->setValue($this->_post, self::trimDeep($data, ''));
+            }
+        } catch (Exception $e) {
+            // leave the request untouched if the framework layout is different
+        }
+    }
+
+    protected static function trimDeep($value, $key)
+    {
+        if (is_array($value))
+        {
+            foreach ($value as $k => $v)
+            {
+                $value[$k] = self::trimDeep($v, (string) $k);
+            }
+            return $value;
+        }
+        if (is_string($value) && !preg_match('/pass|token|secret|captcha/i', (string) $key))
+        {
+            $out = @preg_replace('/^[\\s\\x{00A0}\\x{200B}\\x{FEFF}]+|[\\s\\x{00A0}\\x{200B}\\x{FEFF}]+$/u', '', $value);
+            return $out === null ? trim($value) : trim($out);
+        }
+        return $value;
+    }
+
+    /**
+     * True when at least one language holds a non-blank value for $field
+     * (the form itself requires the default language; this is the server-side safety net).
+     */
+    protected static function i18nFilled($i18n_arr, $field)
+    {
+        if (!is_array($i18n_arr))
+        {
+            return false;
+        }
+        foreach ($i18n_arr as $row)
+        {
+            if (is_array($row) && isset($row[$field]) && is_string($row[$field]) && trim($row[$field]) !== '')
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Customer fields that the booking-form settings mark as "required" (value 3)
+     * but that arrived empty/blank. Returns the list of field names.
+     */
+    protected function missingRequiredCustomerFields()
+    {
+        $missing = array();
+        foreach (array('name', 'email', 'phone', 'address', 'city', 'state', 'zip', 'country', 'notes') as $f)
+        {
+            if (isset($this->option_arr['o_bf_include_' . $f]) && (int) $this->option_arr['o_bf_include_' . $f] === 3)
+            {
+                $v = $this->_post->toString('customer_' . $f);
+                if ($v === false || trim((string) $v) === '')
+                {
+                    $missing[] = $f;
+                }
+            }
+        }
+        return $missing;
     }
 
 	public function afterFilter()

@@ -230,6 +230,10 @@ class pjAdminBookings extends pjAdmin
 			
 		if ($this->_post->check('booking_create'))
 		{
+			if (count($this->missingRequiredCustomerFields()) > 0)
+			{
+				pjUtil::redirect($_SERVER['PHP_SELF'] . "?controller=pjAdminBookings&action=pjActionIndex&err=AR04");
+			}
 			$data = array();
 			
 			$pjBookingModel = pjBookingModel::factory();
@@ -387,6 +391,10 @@ class pjAdminBookings extends pjAdmin
 		
 		if ($this->_post->check('booking_update'))
 		{
+			if (count($this->missingRequiredCustomerFields()) > 0)
+			{
+				pjUtil::redirect($_SERVER['PHP_SELF'] . "?controller=pjAdminBookings&action=pjActionUpdate&id=" . $this->_post->toInt('id') . "&err=AR22");
+			}
 			$data = array();			
 			$data['customer_ip']= $_SERVER['REMOTE_ADDR'];
 			$data['modified']= date('Y-m-d H:i:s');

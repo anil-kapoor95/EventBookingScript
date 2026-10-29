@@ -31,7 +31,7 @@ $booking_statuses = __('booking_statuses', true);
 					</div>
 					<?php 
 					break;
-				case in_array($error_code, array('AR04', 'AR08', 'AR11')):	
+				case in_array($error_code, array('AR04', 'AR08', 'AR11', 'AR22')):	
 					?>
 					<div class="alert alert-danger">
 						<i class="fa fa-exclamation-triangle m-r-xs"></i>

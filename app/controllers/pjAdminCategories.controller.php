@@ -156,6 +156,10 @@ class pjAdminCategories extends pjAdmin
 	    {
 	        self::jsonResponse(array('status' => 'ERR', 'code' => 103, 'text' => 'Missing, empty or invalid parameters.'));
 	    }
+	    if (!self::i18nFilled($this->_post->toArray('i18n'), 'name'))
+	    {
+	        self::jsonResponse(array('status' => 'ERR', 'code' => 104, 'text' => 'Category name is required.'));
+	    }
 	    $data = array();
 	    $data['status'] = $this->_post->check('status') ? 'T' : 'F';	    
 	    $id = pjCategoryModel::factory()->setAttributes(array_merge($this->_post->raw(), $data))->insert()->getInsertId();
@@ -194,6 +198,10 @@ class pjAdminCategories extends pjAdmin
 	    {
 	        self::jsonResponse(array('status' => 'ERR', 'code' => 104, 'text' => 'Missing, empty or invalid parameters.'));
 	    }
+	    if (!self::i18nFilled($this->_post->toArray('i18n'), 'name'))
+	    {
+	        self::jsonResponse(array('status' => 'ERR', 'code' => 105, 'text' => 'Category name is required.'));
+	    }
 	    $data = array();
 	    $data['status'] = $this->_post->check('status') ? 'T' : 'F';
 	    pjCategoryModel::factory()->where('id', $this->_post->toInt('id'))->limit(1)->modifyAll(array_merge($this->_post->raw(), $data));
@@ -221,6 +229,10 @@ class pjAdminCategories extends pjAdmin
 	    if (!pjAuth::factory($this->_get->toString('controller'), 'pjActionUpdate')->hasAccess())
 	    {
 	        self::jsonResponse(array('status' => 'ERR', 'code' => 102, 'text' => 'Access denied.'));
+	    }
+	    if (in_array($this->_post->toString('column'), array('name')) && trim((string) $this->_post->toString('value')) === '')
+	    {
+	        self::jsonResponse(array('status' => 'ERR', 'code' => 106, 'text' => 'Category name is required.'));
 	    }
 	    $pjCategoryModel = pjCategoryModel::factory();
 	    $arr = $pjCategoryModel->find($this->_get->toInt('id'))->getData();
