@@ -1,4 +1,6 @@
 <?php 
+$is_t11 = $controller->getFrontTheme() == 'theme11';
+$short_months_t11 = $is_t11 ? __('short_months', true) : array();
 if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 	?>
 	<h4 class="text-danger text-center"><?php __('front_ip_address_blocked');?></h4>
@@ -57,7 +59,18 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 					$is_fulled = true;
 				}
 				?>
-				<div id="pjEbcEventBox_<?php echo $index; ?>_<?php echo $v['id']?>" class="thumbnail">
+				<div id="pjEbcEventBox_<?php echo $index; ?>_<?php echo $v['id']?>" class="thumbnail<?php echo $is_t11 ? ' pjEbcCard' : ''; ?>">
+					<?php
+					if($is_t11)
+					{
+						$card_img = (!empty($v['event_img']) && is_file(PJ_INSTALL_PATH . $v['event_img'])) ? PJ_INSTALL_URL . $v['event_img'] : '';
+						?>
+						<div class="pjEbcCardMedia"<?php echo $card_img != '' ? ' style="background-image: url(\'' . htmlspecialchars($card_img, ENT_QUOTES) . '\')"' : ''; ?>>
+							<span class="pjEbcDateBadge"><b><?php echo date('d', $v['event_start_ts']); ?></b><i><?php echo isset($short_months_t11[(int) date('n', $v['event_start_ts'])]) ? $short_months_t11[(int) date('n', $v['event_start_ts'])] : date('M', $v['event_start_ts']); ?></i></span>
+						</div>
+						<?php
+					}
+					?>
 					<br/>
 					<div class="container-fluid">
 						<p class="pjEbcEventDate"><?php echo $event_date;?></p>

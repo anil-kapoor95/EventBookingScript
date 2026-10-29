@@ -100,6 +100,17 @@ class pjFrontEnd extends pjFront
 				array('file' => "$theme.css", 'path' => PJ_CSS_PATH . 'themes/')
 		);
 		header("Content-Type: text/css; charset=utf-8");
+		$theme11_colors = array();
+		if ($theme == 'theme11')
+		{
+			$theme11_colors = pjAppController::getTheme11Colors(isset($this->option_arr['o_theme11_colors']) ? $this->option_arr['o_theme11_colors'] : '');
+			$fonts_url = pjAppController::getTheme11FontsUrl($theme11_colors);
+			if ($fonts_url != '')
+			{
+				// @import must be the very first rule of the stylesheet
+				echo '@import url("' . $fonts_url . '");' . "\n";
+			}
+		}
 		foreach ($arr as $item)
 		{
 			ob_start();
@@ -121,6 +132,11 @@ class pjFrontEnd extends pjFront
 						$string
 				) . "\n";
 			}
+		}
+		if (!empty($theme11_colors))
+		{
+			// Colour / font / shape overrides saved from the admin Preview page (Theme 11 only)
+			echo str_replace('pjWrapper', 'pjWrapperEBCalendar_' . $theme, pjAppController::getTheme11CssBlock($theme11_colors));
 		}
 		exit;
 	}

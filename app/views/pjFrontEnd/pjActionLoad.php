@@ -196,7 +196,7 @@ var pjQ = pjQ || {},
 				loadScript("<?php echo PJ_INSTALL_URL . $dm->getPath('pj_jquery_ui'); ?>js/pjQuery-ui.custom.min.js", function () {
 					loadScript("<?php echo PJ_INSTALL_URL . $dm->getPath('pj_bootstrap'); ?>pjQuery.bootstrap.min.js", function () {
 						loadScript("<?php echo PJ_INSTALL_URL . $dm->getPath('pj_tooltipster'); ?>pjQuery.tooltipster.js", function () {
-							loadScript("<?php echo PJ_INSTALL_URL . PJ_JS_PATH; ?>pjEBCalendar.js", function () {
+							loadScript("<?php echo PJ_INSTALL_URL . PJ_JS_PATH; ?>pjEBCalendar.js?v=<?php echo is_file(PJ_INSTALL_PATH . PJ_JS_PATH . 'pjEBCalendar.js') ? filemtime(PJ_INSTALL_PATH . PJ_JS_PATH . 'pjEBCalendar.js') : 1; ?>", function () {
 								<?php if($tpl['option_arr']['o_captcha_type_front'] == 'google'): ?>
 							    loadScript('https://www.google.com/recaptcha/api.js', function () {
 	                            <?php endif; ?>

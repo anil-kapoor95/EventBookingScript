@@ -1,5 +1,10 @@
 <?php 
 $index = $controller->_get->toString('index');
+$is_t11 = $controller->getFrontTheme() == 'theme11';
+$ebcT = function ($key, $default) {
+	$v = __($key, true);
+	return (is_string($v) && $v !== '' && $v !== $key) ? $v : $default;
+};
 if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 	?>
 	<h4 class="text-danger text-center"><?php __('front_ip_address_blocked');?></h4>
@@ -36,6 +41,23 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 		</div>
 	</div>
 	<div class="pjEbcBookingWrapper pjEbcBookingForm">
+<?php
+		if($is_t11)
+		{
+			$ck_date = pjUtil::getEventDateTime($tpl['arr']['event_start_ts'], $tpl['arr']['event_end_ts'], $tpl['option_arr']['o_date_format'], $tpl['option_arr']['o_time_format'], $tpl['arr']['o_show_start_time'], $tpl['arr']['o_show_end_time']);
+			$ck_ts = is_numeric($tpl['arr']['event_start_ts']) ? (int) $tpl['arr']['event_start_ts'] : strtotime($tpl['arr']['event_start_ts']);
+			$ck_months = __('months', true);
+			$ck_mon = ($ck_ts && isset($ck_months[(int) date('n', $ck_ts)])) ? mb_substr($ck_months[(int) date('n', $ck_ts)], 0, 3) : '';
+			?>
+			<div class="pjEbcCkEvent">
+				<?php if($ck_ts) { ?><div class="pjEbcCkBadge"><b><?php echo date('j', $ck_ts); ?></b><i><?php echo pjSanitize::html($ck_mon); ?></i></div><?php } ?>
+				<div><h1 class="pjEbcCkTitle"><?php echo stripslashes($tpl['arr']['title']); ?></h1><p><?php echo $ck_date; ?></p></div>
+			</div>
+			<?php
+		}
+		else
+		{
+		?>
 		<div class="pjEbcFormHeader">
 			<div class="datetime">
 				<?php __('front_label_event_details');?>
@@ -45,15 +67,20 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 			<label><?php echo stripslashes($tpl['arr']['title']) ;?></label>
 			<span><?php echo $event_date = pjUtil::getEventDateTime($tpl['arr']['event_start_ts'], $tpl['arr']['event_end_ts'], $tpl['option_arr']['o_date_format'], $tpl['option_arr']['o_time_format'], $tpl['arr']['o_show_start_time'], $tpl['arr']['o_show_end_time']) ;?></span>
 		</div>
+		<?php } ?>
 		<div class="pjEbcFormContainer">
 			<form id="pjEbcBookingForm_<?php echo $index;?>" action="" method="post" class="pjEbcForm">
 				<input type="hidden" name="total_price" value="0" />
 				<input type="hidden" name="event_id" value="<?php echo $tpl['arr']['id'];?>" />
+					<?php if($is_t11) { ?>
+					<div class="pjEbcCkGrid"><div class="pjEbcCkMain"><section class="pjEbcCkCard"><div class="pjEbcCkSec"><span class="pjEbcCkNum">1</span><h2><?php __('front_label_select_tickets');?></h2></div>
+					<?php } else { ?>
 				<div class="pjEbcFormHeader">
 					<div class="datetime">
 						<?php __('front_label_select_tickets');?>
 					</div>
 				</div>
+					<?php } ?>
 				<div class="pjEbcFormBody">
 					<?php
 					$front_error = __('front_error', true);
@@ -67,7 +94,7 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 						foreach($tpl['price_arr'] as $k => $v)
 						{
 							?>
-							<div class="form-group">
+							<div class="form-group<?php echo $is_t11 ? ' pjEbcTicketRow' . ($controller->_post->check('price_' . $v['id']) && $controller->_post->toInt('price_' . $v['id']) > 0 ? ' pjEbcTicketOn' : '') : ''; ?>">
 								<label class="title"><?php echo stripslashes($v['price_name']);?></label>
 	
 								<div class="row">
@@ -88,8 +115,20 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 												}
 												?>
 											</select>
-										
-											<span class="input-group-addon">x <?php echo pjCurrency::formatPrice($v['price']);?></span>
+											<?php
+											if($is_t11)
+											{
+												$qty_now = $controller->_post->check('price_' . $v['id']) ? $controller->_post->toInt('price_' . $v['id']) : 0;
+												?>
+												<span class="pjEbcStepper">
+													<a href="#" class="pjEbcStep" data-dir="-1" role="button" aria-label="&minus;">&minus;</a>
+													<span class="pjEbcQty"><?php echo $qty_now; ?></span>
+													<a href="#" class="pjEbcStep" data-dir="1" role="button" aria-label="+">+</a>
+												</span>
+												<?php
+											}
+											?>
+											<span class="input-group-addon"><?php echo $is_t11 ? '' : 'x '; ?><?php echo pjCurrency::formatPrice($v['price']);?></span>
 										</div><!-- /.input-group -->
 									</div><!-- /.col-lg6 col-md-6 col-sm-6 col-xs-12 -->
 								</div><!-- /.row -->
@@ -106,6 +145,7 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 						}
 					} 
 					?>
+					<?php ob_start(); ?>
 					<div class="form-group pjEbcPriceRow pjEbcVoucherRow" style="display: none">
 						<label class="title"><?php __('front_label_discount_code'); ?></label>
 						<div class="row">
@@ -141,12 +181,24 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 							<label id="pjEbcDeposit_<?php echo $index; ?>" class="content">---</label>
 						</p>
 					</div><!-- /.col-lg-12 col-md-12 col-sm-12 col-xs-12 -->
-				</div>
-				<div class="pjEbcFormHeader">
-					<div class="datetime">
-						<?php __('front_label_fill_in');?>
+					<?php
+					$price_block_html = ob_get_clean();
+					if(!$is_t11)
+					{
+						echo $price_block_html;
+					}
+					?>
+					</div>
+						<?php if($is_t11) { ?></section><!-- /.pjEbcCkCard --><?php } ?>
+						<?php if($is_t11) { ?>
+						<section class="pjEbcCkCard"><div class="pjEbcCkSec"><span class="pjEbcCkNum">2</span><h2><?php __('front_label_fill_in');?></h2></div>
+						<?php } else { ?>
+					<div class="pjEbcFormHeader">
+						<div class="datetime">
+							<?php __('front_label_fill_in');?>
 					</div>
 				</div>
+						<?php } ?>
 				<div class="row pjEbcFormBody">
 					<?php
 					if (in_array($tpl['option_arr']['o_bf_include_email'], array(2, 3)))
@@ -412,12 +464,36 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 						<?php
 					}
 					?>
+						<?php if(!$is_t11) { ?>
 					<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
 						<label class="title">&nbsp;</label>
 						<input type="submit" value="<?php __('front_button_submit'); ?>" class="pjEbcButton btn btn-primary" />
 						<input type="button" value="<?php __('front_button_cancel'); ?>" class="pjEbcButton btn btn-primary pjEbcCancelBooking" data-id="<?php echo $tpl['arr']['id'];?>"/>
 					</div>
+						<?php } ?>
 				</div>
+				<?php
+									if($is_t11)
+									{
+										$ck_t = $ebcT('front_label_select_tickets_hint', 'Select at least one ticket to see your total.');
+										?>
+										</section><!-- /.pjEbcCkCard -->
+										</div><!-- /.pjEbcCkMain -->
+										<aside class="pjEbcCkAside">
+											<h3 class="pjEbcCkAsideTitle"><?php echo htmlspecialchars($ebcT('front_label_order_summary', 'Order summary')); ?></h3>
+											<div class="pjEbcCkAsideEvent"><strong><?php echo pjSanitize::html(stripslashes($tpl['arr']['title'])); ?></strong><span><?php echo $ck_date; ?></span></div>
+											<div class="pjEbcCkLines" id="pjEbcCkLines_<?php echo $index; ?>"></div>
+											<div class="pjEbcCkEmpty"><?php echo htmlspecialchars($ck_t); ?></div>
+											<?php echo $price_block_html; ?>
+											<div class="pjEbcCkActions">
+												<input type="submit" value="<?php __('front_button_submit'); ?>" class="pjEbcButton btn btn-primary" />
+												<input type="button" value="<?php __('front_button_cancel'); ?>" class="pjEbcButton pjEbcCancelBooking" data-id="<?php echo $tpl['arr']['id'];?>"/>
+											</div>
+										</aside>
+										</div><!-- /.pjEbcCkGrid -->
+										<?php
+									}
+									?>
 			</form>
 		</div>
 	</div>

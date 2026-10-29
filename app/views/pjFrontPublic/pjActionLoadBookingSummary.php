@@ -1,5 +1,10 @@
 <?php 
 $index = $controller->_get->toString('index');
+$is_t11 = $controller->getFrontTheme() == 'theme11';
+$ebcT = function ($key, $default) {
+	$v = __($key, true);
+	return (is_string($v) && $v !== '' && $v !== $key) ? $v : $default;
+};
 if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 	?>
 	<h4 class="text-danger text-center"><?php __('front_ip_address_blocked');?></h4>
@@ -37,6 +42,7 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 	</div>
 	
 	<div class="pjEbcBookingWrapper pjEbcBookingForm">
+			<?php if(!$is_t11) { ?>
 		<div class="pjEbcFormHeader">
 			<div class="datetime">
 				<?php
@@ -45,6 +51,7 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 				?>
 			</div>
 		</div>
+			<?php } ?>
 		<div class="pjEbcFormContainer">
 			<form id="pjEbcBookingSummary_<?php echo $index;?>" action="" method="post" class="pjEbcForm" style="width: auto">
 				<div class="pjEbcFormBody">
@@ -53,6 +60,16 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 					$months = __('months', true); ksort($months);
 					$payment_methods = __('payment_methods', true);
 					$front_messages = __('front_message', true);
+						$t11_date = pjUtil::getEventDateTime($tpl['arr']['event_start_ts'], $tpl['arr']['event_end_ts'], $tpl['option_arr']['o_date_format'], $tpl['option_arr']['o_time_format'], $tpl['arr']['o_show_start_time'], $tpl['arr']['o_show_end_time']);
+						if($is_t11)
+						{
+							?>
+							<div class="pjEbcSumGrid">
+							<div class="pjEbcSumMain">
+							<div class="pjEbcCardBox pjEbcCardTickets">
+								<div class="pjEbcCardHead"><strong><?php echo pjSanitize::html(stripslashes($tpl['arr']['title'])); ?></strong><span><?php echo $t11_date; ?></span></div>
+							<?php
+						}
 					
 					if(count($tpl['price_arr']) > 0)
 					{
@@ -62,7 +79,7 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 							{
 								?>
 								<dl class="dl-horizontal">
-									<dt class="title"><?php echo stripslashes($v['price_name']);?> (<?php echo $controller->_post->toInt('price_' . $v['id']); ?> x  <?php echo pjCurrency::formatPrice($v['price']);?>)</dt>
+									<dt class="title"><?php echo stripslashes($v['price_name']);?> (<?php echo $controller->_post->toInt('price_' . $v['id']); ?> <?php echo $is_t11 ? '&times; ' : 'x  '; ?><?php echo pjCurrency::formatPrice($v['price']);?>)</dt>
 									<dd class="content"><?php echo pjCurrency::formatPrice($controller->_post->toInt('price_' . $v['id']) * $v['price']); ?></dd>
 								</dl>
 								<?php
@@ -89,7 +106,7 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 						<dt class="title"><?php __('front_label_tax'); ?></dt>
 						<dd class="content"><?php echo pjCurrency::formatPrice($tpl['amount']['tax']); ?></dd>
 					</dl>
-					<dl class="dl-horizontal">
+					<dl class="dl-horizontal<?php echo $is_t11 ? ' pjEbcSumTotal' : ''; ?>">
 						<dt class="title"><?php __('front_label_total_price'); ?></dt>
 						<dd class="content"><?php echo pjCurrency::formatPrice($tpl['amount']['total']); ?></dd>
 					</dl>
@@ -97,6 +114,7 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 						<dt class="title"><?php __('front_label_deposit'); ?></dt>
 						<dd class="content"><?php echo pjCurrency::formatPrice($tpl['amount']['deposit']); ?></dd>
 					</dl>
+					<?php if($is_t11) { ?></div><!-- /.pjEbcCardTickets --><div class="pjEbcCardBox pjEbcCardDetails"><h3 class="pjEbcCardTitle"><?php echo htmlspecialchars($ebcT('front_label_your_details', 'Your details')); ?></h3><?php } ?>
 					<?php
 					if (in_array($tpl['option_arr']['o_bf_include_name'], array(2, 3)) && $controller->_post->check('customer_name'))
 					{
@@ -242,6 +260,7 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 						}
 					}
 					?>
+					<?php if($is_t11) { ?></div><!-- /.pjEbcCardDetails --><?php } ?>
 					<p id="pjEbcErrorMessage_<?php echo $index;?>" class="pjEbcError pjEbcErrorMessage" style="display: none"></dl>
 					<p id="pjEbcMessageContainer_<?php echo $index; ?>" style="display:none;"><?php echo $front_messages[5]; ?></dl>
 					<div>
@@ -249,6 +268,45 @@ if (isset($tpl['status']) && $tpl['status'] == 'IP_BLOCKED') {
 						<input type="submit" value="<?php __('front_button_submit'); ?>" class="pjEbcButton btn btn-primary"/>
 						<input type="button" value="<?php __('front_button_cancel'); ?>" class="pjEbcButton btn btn-primary pjEbcCancelSummary"/>
 					</div>
+					<?php
+					if($is_t11)
+					{
+						$sum_tickets = array();
+						if(count($tpl['price_arr']) > 0)
+						{
+							foreach($tpl['price_arr'] as $v)
+							{
+								if ($controller->_post->check('price_' . $v['id']) && $controller->_post->toInt('price_' . $v['id']) > 0)
+								{
+									$sum_tickets[] = array('name' => stripslashes($v['price_name']), 'qty' => $controller->_post->toInt('price_' . $v['id']), 'amount' => $controller->_post->toInt('price_' . $v['id']) * $v['price']);
+								}
+							}
+						}
+						?>
+						</div><!-- /.pjEbcSumMain -->
+						<aside class="pjEbcSumAside">
+							<h3 class="pjEbcSumAsideTitle"><?php echo htmlspecialchars($ebcT('front_label_order_summary', 'Order summary')); ?></h3>
+							<div class="pjEbcSumAsideEvent">
+								<strong><?php echo pjSanitize::html(stripslashes($tpl['arr']['title'])); ?></strong>
+								<span><?php echo $t11_date; ?></span>
+							</div>
+							<div class="pjEbcSumAsideLines">
+								<?php foreach($sum_tickets as $t) { ?>
+									<dl class="dl-horizontal"><dt class="title"><?php echo pjSanitize::html($t['name']); ?> &times; <?php echo $t['qty']; ?></dt><dd class="content"><?php echo pjCurrency::formatPrice($t['amount']); ?></dd></dl>
+								<?php } ?>
+								<dl class="dl-horizontal"><dt class="title"><?php __('front_label_price'); ?></dt><dd class="content"><?php echo pjCurrency::formatPrice($tpl['amount']['price']); ?></dd></dl>
+								<?php if (isset($tpl['amount']['discount']) && (float) $tpl['amount']['discount'] > 0) { ?>
+									<dl class="dl-horizontal pjEbcSumDiscount"><dt class="title"><?php __('front_label_discount'); ?><?php echo !empty($tpl['voucher']['voucher_code']) ? ' (' . pjSanitize::html($tpl['voucher']['voucher_code']) . ')' : ''; ?></dt><dd class="content">-<?php echo pjCurrency::formatPrice($tpl['amount']['discount']); ?></dd></dl>
+								<?php } ?>
+								<dl class="dl-horizontal"><dt class="title"><?php __('front_label_tax'); ?></dt><dd class="content"><?php echo pjCurrency::formatPrice($tpl['amount']['tax']); ?></dd></dl>
+							</div>
+							<dl class="dl-horizontal pjEbcSumTotal"><dt class="title"><?php __('front_label_total_price'); ?></dt><dd class="content"><?php echo pjCurrency::formatPrice($tpl['amount']['total']); ?></dd></dl>
+							<div class="pjEbcSumDeposit"><span><?php echo htmlspecialchars($ebcT('front_label_deposit_due', 'Deposit due now')); ?></span><strong><?php echo pjCurrency::formatPrice($tpl['amount']['deposit']); ?></strong></div>
+						</aside>
+						</div><!-- /.pjEbcSumGrid -->
+						<?php
+					}
+					?>
 				</div>
 			</form>
 		</div>

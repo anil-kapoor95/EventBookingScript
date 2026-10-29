@@ -45,6 +45,189 @@ class pjAppController extends pjBaseAppController
 			exit('Invalid CSRF token.');
 		}
 	}
+
+	/**
+	 * Theme 11: default values of the colour / font / shape settings (must match app/web/css/themes/theme11.css).
+	 */
+	public static function getTheme11Defaults()
+	{
+		return array(
+			'primary' => '#c84e33',
+			'accent' => '#2f6f6a',
+			'bg' => '#fbf1ec',
+			'surface' => '#ffffff',
+			'heading' => '#3b1c14',
+			'text' => '#4a3730',
+			'muted' => '#7d625a',
+			'border' => '#efd9cf',
+			'soft' => '#f9ece9',
+			'font_heading' => 'Poppins',
+			'font_body' => 'Inter',
+			'radius' => 18,
+			'button' => 'pill'
+		);
+	}
+
+	/**
+	 * Theme 11: fonts the admin can choose from (name => Google Fonts family, NULL for system fonts).
+	 */
+	public static function getTheme11Fonts()
+	{
+		return array(
+			'Poppins' => 'Poppins',
+			'Inter' => 'Inter',
+			'DM Sans' => 'DM+Sans',
+			'Nunito' => 'Nunito',
+			'Space Grotesk' => 'Space+Grotesk',
+			'Playfair Display' => 'Playfair+Display',
+			'System UI' => NULL
+		);
+	}
+
+	/**
+	 * Theme 11: validates the saved JSON and returns ONLY the valid overrides (empty array = use CSS defaults).
+	 * Every value is checked against a strict whitelist, so the result is safe to print inside a stylesheet.
+	 */
+	public static function getTheme11Colors($json)
+	{
+		$out = array();
+		if (!is_string($json) || $json === '')
+		{
+			return $out;
+		}
+		$arr = json_decode($json, true);
+		if (!is_array($arr))
+		{
+			return $out;
+		}
+		$defaults = self::getTheme11Defaults();
+		$fonts = self::getTheme11Fonts();
+		foreach ($defaults as $key => $default)
+		{
+			if (!isset($arr[$key]))
+			{
+				continue;
+			}
+			$v = $arr[$key];
+			if (in_array($key, array('primary', 'accent', 'bg', 'surface', 'heading', 'text', 'muted', 'border', 'soft'), true))
+			{
+				if (is_string($v) && preg_match('/^#[0-9a-fA-F]{6}$/', $v))
+				{
+					$out[$key] = strtolower($v);
+				}
+			} elseif ($key == 'font_heading' || $key == 'font_body') {
+				if (is_string($v) && array_key_exists($v, $fonts))
+				{
+					$out[$key] = $v;
+				}
+			} elseif ($key == 'radius') {
+				if (is_numeric($v) && (int) $v >= 0 && (int) $v <= 32)
+				{
+					$out[$key] = (int) $v;
+				}
+			} elseif ($key == 'button') {
+				if (is_string($v) && in_array($v, array('pill', 'rounded', 'square'), true))
+				{
+					$out[$key] = $v;
+				}
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Theme 11: Google Fonts stylesheet URL for the effective heading + body fonts ('' when only system fonts are used).
+	 */
+	public static function getTheme11FontsUrl($overrides)
+	{
+		$cfg = array_merge(self::getTheme11Defaults(), is_array($overrides) ? $overrides : array());
+		$fonts = self::getTheme11Fonts();
+		$families = array();
+		foreach (array($cfg['font_heading'], $cfg['font_body']) as $name)
+		{
+			if (isset($fonts[$name]) && $fonts[$name] !== NULL)
+			{
+				$families[$fonts[$name]] = 'family=' . $fonts[$name] . ':wght@400;500;600;700';
+			}
+		}
+		if (empty($families))
+		{
+			return '';
+		}
+		return 'https://fonts.googleapis.com/css2?' . join('&', $families) . '&display=swap';
+	}
+
+	/**
+	 * Theme 11: builds the "#pjWrapper{--eb-*:...}" block from validated overrides.
+	 */
+	public static function getTheme11CssBlock($overrides)
+	{
+		if (empty($overrides))
+		{
+			return '';
+		}
+		$fonts = self::getTheme11Fonts();
+		$stack = function ($name) use ($fonts) {
+			$sys = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+			if ($name == 'Playfair Display')
+			{
+				return "'Playfair Display', Georgia, 'Times New Roman', serif";
+			}
+			if (!isset($fonts[$name]) || $fonts[$name] === NULL)
+			{
+				return "system-ui, " . $sys;
+			}
+			return "'" . $name . "', " . $sys;
+		};
+		$lum = function ($hex) {
+			$c = array();
+			foreach (array(1, 3, 5) as $i)
+			{
+				$v = hexdec(substr($hex, $i, 2)) / 255;
+				$c[] = $v <= 0.03928 ? $v / 12.92 : pow(($v + 0.055) / 1.055, 2.4);
+			}
+			return 0.2126 * $c[0] + 0.7152 * $c[1] + 0.0722 * $c[2];
+		};
+		$vars = array();
+		$map = array('primary' => '--eb-primary', 'accent' => '--eb-accent', 'bg' => '--eb-bg', 'surface' => '--eb-surface', 'heading' => '--eb-heading', 'text' => '--eb-text', 'muted' => '--eb-muted', 'border' => '--eb-border');
+		foreach ($map as $k => $css)
+		{
+			if (isset($overrides[$k]))
+			{
+				$vars[] = $css . ':' . $overrides[$k];
+			}
+		}
+		if (isset($overrides['soft']))
+		{
+			$vars[] = '--eb-primary-soft:' . $overrides['soft'];
+		}
+		if (isset($overrides['primary']))
+		{
+			// white or near-black text on the brand colour, whichever has the better contrast
+			$l = $lum($overrides['primary']);
+			$vars[] = '--eb-primary-contrast:' . ((1.05 / ($l + 0.05)) >= (($l + 0.05) / 0.06) ? '#ffffff' : '#111111');
+		}
+		if (isset($overrides['font_heading']))
+		{
+			$vars[] = '--eb-font-heading:' . $stack($overrides['font_heading']);
+		}
+		if (isset($overrides['font_body']))
+		{
+			$vars[] = '--eb-font-body:' . $stack($overrides['font_body']);
+		}
+		if (isset($overrides['radius']))
+		{
+			$vars[] = '--eb-radius:' . (int) $overrides['radius'] . 'px';
+			$vars[] = '--eb-radius-sm:' . (int) round($overrides['radius'] * 0.66) . 'px';
+		}
+		if (isset($overrides['button']))
+		{
+			$btn = array('pill' => '999px', 'rounded' => '10px', 'square' => '3px');
+			$vars[] = '--eb-radius-btn:' . $btn[$overrides['button']];
+		}
+		return empty($vars) ? '' : "\n/* Theme 11 customization */\n#pjWrapper{" . join(';', $vars) . ";}\n";
+	}
+
 	public function isEditor()
     {
     	return $this->getRoleId() == 2;

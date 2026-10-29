@@ -300,6 +300,24 @@
 					pjQ.$('#pjEbcTicketValidate_' + self.opts.index).val(rand).valid();
 				}
 				self.calPrices(1);
+			}).on("click.ebc", ".pjEbcStep", function (e) {
+				// Theme 11 quantity stepper: drives the (visually hidden) ticket <select>, so validation and price logic stay unchanged
+				if (e && e.preventDefault) { e.preventDefault(); }
+				var $step = pjQ.$(this),
+					$group = $step.closest('.input-group'),
+					$select = $group.find('select.pjEbcPriceSelector'),
+					dir = parseInt($step.data('dir'), 10),
+					current = parseInt($select.val(), 10) || 0,
+					max = $select.find('option').length - 1,
+					next = Math.max(0, Math.min(max, current + dir));
+				if (next !== current)
+				{
+					$select.val(next).trigger('change');
+				}
+				return false;
+			}).on("change.ebc", ".pjEbcPriceSelector", function (e) {
+				pjQ.$(this).closest('.input-group').find('.pjEbcQty').text(pjQ.$(this).val());
+				pjQ.$(this).closest('.pjEbcTicketRow').toggleClass('pjEbcTicketOn', (parseInt(pjQ.$(this).val(), 10) || 0) > 0);
 			}).on("click.ebc", ".pjEbcApplyCode", function (e) {
 				if (e && e.preventDefault) { e.preventDefault(); }
 				var idx = self.opts.index,
@@ -796,6 +814,22 @@
 					cnt = pjQ.$(this).val();
 				price += parseFloat(unit_price) * parseInt(cnt, 10);
 			});
+
+			// Theme 11 order summary: one line per selected ticket type
+			var $ckLines = pjQ.$('#pjEbcCkLines_' + this.opts.index);
+			if ($ckLines.length)
+			{
+				var ckHtml = '';
+				pjQ.$(".pjEbcPriceSelector").each(function () {
+					var n = parseInt(pjQ.$(this).val(), 10) || 0;
+					if (n > 0)
+					{
+						var nm = pjQ.$(this).closest('.form-group').find('label.title').first().text();
+						ckHtml += '<p class="pjEbcCkLine"><span>' + pjQ.$('<div/>').text(nm).html() + ' &times; ' + n + '</span><b>' + self.formatCurrency(parseFloat(pjQ.$(this).data('price')) * n, self.opts.currency) + '</b></p>';
+					}
+				});
+				$ckLines.html(ckHtml);
+			}
 
 			if(price <= 0)
 			{

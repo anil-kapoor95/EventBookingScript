@@ -141,12 +141,74 @@ class pjAdminOptions extends pjAdmin
 			->where('foreign_id', $this->getForeignId())
 			->where('`key`', 'o_theme')
 			->limit(1)
-			->modifyAll(array('value' => 'theme1|theme2|theme3|theme4|theme5|theme6|theme7|theme8|theme9|theme10::' . $this->_post->toString('theme')));
+			->modifyAll(array('value' => 'theme1|theme2|theme3|theme4|theme5|theme6|theme7|theme8|theme9|theme10|theme11::' . $this->_post->toString('theme')));
 		
 		self::jsonResponse(array('status' => 'OK', 'code' => 200, 'text' => 'Theme has been changed.'));
 	}
 	
 	
+	/**
+	 * Theme 11: saves (or resets) the colour / font / shape settings used by the front-end theme.
+	 * The posted JSON is validated against a strict whitelist before it is stored.
+	 */
+	public function pjActionSaveThemeColors()
+	{
+		$this->setAjax(true);
+
+		if (!$this->isXHR())
+		{
+			self::jsonResponse(array('status' => 'ERR', 'code' => 100, 'text' => 'Missing headers.'));
+		}
+
+		if (!self::isPost())
+		{
+			self::jsonResponse(array('status' => 'ERR', 'code' => 101, 'text' => 'HTTP method not allowed.'));
+		}
+
+		$post = $this->_post->raw();
+		$value = '';
+		if (!(isset($post['reset']) && (int) $post['reset'] === 1))
+		{
+			$valid = pjAppController::getTheme11Colors(isset($post['colors']) ? (string) $post['colors'] : '');
+			if (empty($valid))
+			{
+				self::jsonResponse(array('status' => 'ERR', 'code' => 102, 'text' => 'Missing, empty or invalid parameters.'));
+			}
+			$value = json_encode($valid);
+		}
+
+		$foreign_id = $this->getForeignId();
+		$exists = pjOptionModel::factory()
+			->where('foreign_id', $foreign_id)
+			->where('`key`', 'o_theme11_colors')
+			->findCount()
+			->getData();
+		if ($exists > 0)
+		{
+			pjOptionModel::factory()
+				->where('foreign_id', $foreign_id)
+				->where('`key`', 'o_theme11_colors')
+				->limit(1)
+				->modifyAll(array('value' => $value));
+		} else {
+			pjOptionModel::factory()
+				->setAttributes(array(
+					'foreign_id' => $foreign_id,
+					'key' => 'o_theme11_colors',
+					'tab_id' => NULL,
+					'value' => $value,
+					'label' => NULL,
+					'type' => 'text',
+					'order' => NULL,
+					'is_visible' => 0,
+					'style' => NULL
+				))
+				->insert();
+		}
+
+		self::jsonResponse(array('status' => 'OK', 'code' => 200, 'text' => $value === '' ? 'Theme colors have been reset.' : 'Theme colors have been saved.'));
+	}
+
 	public function pjActionPreview()
 	{
         $this->appendJs('pjAdminOptions.js');

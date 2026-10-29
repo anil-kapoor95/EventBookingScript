@@ -11,6 +11,19 @@ class pjFront extends pjAppController
     public $defaultLocale = 'pjEBCalendar_LocaleId';
 
     public $defaultDiscountCode = 'pjEBCalendar_DiscountCode';
+
+    /**
+     * Returns the active front-end theme id (e.g. "theme11"): the "theme" GET parameter or the saved option.
+     */
+    public function getFrontTheme()
+    {
+        $theme = $this->_get->check('theme') ? $this->_get->toString('theme') : (isset($this->option_arr['o_theme']) ? $this->option_arr['o_theme'] : 'theme1');
+        if ((int) $theme > 0)
+        {
+            $theme = 'theme' . $theme;
+        }
+        return $theme;
+    }
     
     public function __construct()
     {
